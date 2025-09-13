@@ -1,0 +1,47 @@
+{
+  "input": {
+    "projectTitle": "Corporate Dashboard Web App",
+    "description": "A comprehensive web-based dashboard for corporate analytics with real-time data visualization, user management, reporting capabilities, and integration with multiple data sources. Features include interactive charts, data export, role-based access control, and responsive design.",
+    "platforms": ["web"],
+    "integrations": ["REST API", "GraphQL", "Database", "Authentication", "File Storage"],
+    "nfrs": ["High Performance", "Scalability", "Security", "Accessibility"],
+    "languagesCount": 3,
+    "teamExperience": "senior",
+    "qualityLevel": "enterprise"
+  },
+  "expectedOutput": {
+    "projectId": "sample-corporate-dashboard",
+    "projectName": "Corporate Dashboard Web App",
+    "totalEffortPoints": 89,
+    "optimisticWeeks": 8,
+    "mostLikelyWeeks": 11,
+    "pessimisticWeeks": 16,
+    "roles": [
+      {
+        "role": "Frontend Developer",
+        "effortWeeks": 18,
+        "percentage": 35
+      },
+      {
+        "role": "Backend Developer",
+        "effortWeeks": 16,
+        "percentage": 31
+      },
+      {
+        "role": "DevOps Engineer",
+        "effortWeeks": 8,
+        "percentage": 15
+      },
+      {
+        "role": "QA Engineer",
+        "effortWeeks": 7,
+        "percentage": 14
+      },
+      {
+        "role": "UI/UX Designer",
+        "effortWeeks": 3,
+        "percentage": 5
+      }
+    ]
+  }
+}

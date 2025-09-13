@@ -1,0 +1,42 @@
+{
+  "input": {
+    "projectTitle": "E-commerce Mobile App",
+    "description": "A mobile application for online shopping with user authentication, product catalog, shopping cart, payment processing, and order management. The app should support both iOS and Android platforms with a modern UI/UX design.",
+    "platforms": ["mobile"],
+    "integrations": ["REST API", "Database", "Authentication", "Payment Gateway", "Push Notifications"],
+    "nfrs": ["High Performance", "Security", "Scalability"],
+    "languagesCount": 2,
+    "teamExperience": "mid",
+    "qualityLevel": "production"
+  },
+  "expectedOutput": {
+    "projectId": "sample-ecommerce-app",
+    "projectName": "E-commerce Mobile App",
+    "totalEffortPoints": 144,
+    "optimisticWeeks": 12,
+    "mostLikelyWeeks": 15,
+    "pessimisticWeeks": 22,
+    "roles": [
+      {
+        "role": "Mobile Developer",
+        "effortWeeks": 25,
+        "percentage": 40
+      },
+      {
+        "role": "Backend Developer",
+        "effortWeeks": 20,
+        "percentage": 32
+      },
+      {
+        "role": "UI/UX Designer",
+        "effortWeeks": 8,
+        "percentage": 13
+      },
+      {
+        "role": "QA Engineer",
+        "effortWeeks": 9,
+        "percentage": 15
+      }
+    ]
+  }
+}

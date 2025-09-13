@@ -1,0 +1,54 @@
+name: project_estimation_assistant
+description: A Flutter application for project estimation using AI - Web, Android & iOS.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # State management
+  hooks_riverpod: ^2.4.9
+  flutter_hooks: ^0.20.3
+  
+  # HTTP client
+  http: ^1.1.0
+  
+  # Internationalization
+  intl: ^0.18.1
+  
+  # File operations
+  file_saver: ^0.2.9
+  
+  # UI components
+  flutter_svg: ^2.0.9
+  google_fonts: ^6.1.0
+  
+  # Responsive design
+  responsive_framework: ^1.1.1
+  flutter_screenutil: ^5.9.0
+  
+  # Platform detection
+  universal_io: ^2.2.2
+  
+  # Utilities
+  uuid: ^4.2.1
+  json_annotation: ^4.8.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  json_serializable: ^6.7.1
+  build_runner: ^2.4.7
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/icons/

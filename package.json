@@ -1,0 +1,22 @@
+{
+  "name": "project-estimation-assistant",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "backend_api",
+    "packages/*"
+  ],
+  "scripts": {
+    "backend:dev": "yarn workspace backend-api dev",
+    "backend:build": "yarn workspace backend-api build",
+    "backend:test": "yarn workspace backend-api test",
+    "frontend:dev": "cd frontend_flutter && flutter run -d chrome",
+    "frontend:build": "cd frontend_flutter && flutter build web",
+    "frontend:test": "cd frontend_flutter && flutter test"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "yarn": ">=1.22.0"
+  },
+  "packageManager": "yarn@3.6.1"
+}
