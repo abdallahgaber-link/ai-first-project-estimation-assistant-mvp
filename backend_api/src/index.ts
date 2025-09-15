@@ -8,7 +8,7 @@ import { logger as honoLogger } from 'hono/logger';
 import { serve } from '@hono/node-server';
 import { estimateHandler } from './handlers/estimate';
 import { exportHandler } from './handlers/export';
-import { healthHandler } from './handlers/health';
+import { healthHandler } from './handlers/health/';
 import logger from './services/logger.service';
 
 const app = new Hono();

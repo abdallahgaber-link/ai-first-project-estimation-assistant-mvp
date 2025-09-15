@@ -1,7 +1,10 @@
 import { createAzureClient, type ChatMessage, type AzureError } from './azureClient';
+import { createGeminiClient, type GeminiChatMessage, type GeminiError } from './geminiClient';
+import { createOllamaClient, type OllamaChatMessage, type OllamaError } from './ollamaClient';
 import { EstimationEngine, type EstimationInput, type EstimationResult, type WBSResponse } from './estimation';
 import { WBSSchema } from '../schemas/wbs';
 import { logger } from './logger';
+import { getConfig } from '../config';
 import fs from 'fs';
 import path from 'path';
 
@@ -20,12 +23,32 @@ export interface LLMCallMeta {
 
 class LLMService {
   private azureClient: ReturnType<typeof createAzureClient>;
+  private geminiClient: ReturnType<typeof createGeminiClient> | null = null;
+  private ollamaClient: ReturnType<typeof createOllamaClient> | null = null;
   private estimationEngine: EstimationEngine;
+  private config: ReturnType<typeof getConfig>;
 
   constructor() {
+    this.config = getConfig();
     this.azureClient = createAzureClient();
     this.estimationEngine = new EstimationEngine();
-    console.log('🔧 LLM Service initialized with Azure OpenAI provider');
+    
+    // Initialize fallback clients if enabled
+    if (this.config.llm.enableFallback) {
+      try {
+        if (this.config.llm.fallbackProviders.includes('gemini') && process.env.GEMINI_API_KEY) {
+          this.geminiClient = createGeminiClient();
+        }
+        if (this.config.llm.fallbackProviders.includes('ollama')) {
+          this.ollamaClient = createOllamaClient();
+        }
+      } catch (error) {
+        console.warn('Failed to initialize some fallback clients:', error);
+      }
+    }
+    
+    console.log('🔧 LLM Service initialized with Azure primary and fallback providers:', 
+      this.config.llm.enableFallback ? this.config.llm.fallbackProviders : 'disabled');
   }
 
   public async generateEstimation(
@@ -134,13 +157,128 @@ class LLMService {
       }
     }
 
-    // If all attempts failed, return a fallback estimation for testing
-    logger.warn('Azure estimation failed, using fallback sample data for testing', {
+    // Try fallback providers if enabled
+    if (this.config.llm.enableFallback) {
+      for (const provider of this.config.llm.fallbackProviders) {
+        try {
+          logger.info(`Attempting fallback to ${provider} provider`, { retryCount });
+          
+          if (provider === 'gemini' && this.geminiClient) {
+            const result = await this.tryGeminiEstimation(messages, retryCount);
+            return result;
+          } else if (provider === 'ollama' && this.ollamaClient) {
+            const result = await this.tryOllamaEstimation(messages, retryCount);
+            return result;
+          }
+        } catch (fallbackError) {
+          logger.warn(`Fallback to ${provider} also failed`, {
+            error: (fallbackError as Error).message,
+            retryCount
+          });
+          continue;
+        }
+      }
+    }
+    
+    // If all providers failed, return sample fallback
+    logger.warn('All providers failed, using sample fallback data', {
       retryCount,
       lastError: lastError?.message,
       status: lastError?.status
     });
     
+    return this.createSampleFallback(input, retryCount);
+  }
+
+  private async tryGeminiEstimation(messages: ChatMessage[], retryCount: number): Promise<{ result: EstimationResult; meta: LLMCallMeta }> {
+    if (!this.geminiClient) {
+      throw new Error('Gemini client not initialized');
+    }
+
+    // Convert Azure messages to Gemini format (skip system messages as Gemini doesn't support them)
+    const geminiMessages: GeminiChatMessage[] = messages
+      .filter(msg => msg.role !== 'system')
+      .map(msg => ({
+        role: msg.role === 'assistant' ? 'model' as const : 'user' as const,
+        parts: [{ text: msg.content }]
+      }));
+
+    // If we have a system message, prepend it to the first user message
+    const systemMessage = messages.find(msg => msg.role === 'system');
+    if (systemMessage && geminiMessages.length > 0 && geminiMessages[0].role === 'user') {
+      geminiMessages[0].parts[0].text = `${systemMessage.content}\n\n${geminiMessages[0].parts[0].text}`;
+    }
+
+    const response = await this.geminiClient.chat({ messages: geminiMessages });
+    const content = response.response.text();
+    
+    logger.info('Gemini response received', {
+      sessionId: response.sessionId,
+      latencyMs: response.latencyMs,
+      contentLength: content.length,
+      contentPreview: content.substring(0, 200)
+    });
+
+    const wbs = this.parseAndValidateWBS(content);
+    const estimation = this.estimationEngine.estimateProject(wbs, messages[1].content as any);
+
+    const meta: LLMCallMeta = {
+      provider: 'gemini',
+      model: process.env.GEMINI_MODEL || 'gemini-1.5-flash',
+      latencyMs: response.latencyMs,
+      usedFallback: true,
+      sessionId: response.sessionId,
+      retryCount,
+      inputTokens: response.response.usageMetadata?.promptTokenCount || 0,
+      outputTokens: response.response.usageMetadata?.candidatesTokenCount || 0,
+      totalTokens: response.response.usageMetadata?.totalTokenCount || 0,
+      timestamp: new Date().toISOString()
+    };
+
+    return { result: estimation, meta };
+  }
+
+  private async tryOllamaEstimation(messages: ChatMessage[], retryCount: number): Promise<{ result: EstimationResult; meta: LLMCallMeta }> {
+    if (!this.ollamaClient) {
+      throw new Error('Ollama client not initialized');
+    }
+
+    // Convert Azure messages to Ollama format
+    const ollamaMessages: OllamaChatMessage[] = messages.map(msg => ({
+      role: msg.role === 'assistant' ? 'assistant' : msg.role,
+      content: msg.content
+    }));
+
+    const response = await this.ollamaClient.chat({ messages: ollamaMessages });
+    const content = response.response.message.content;
+    
+    logger.info('Ollama response received', {
+      sessionId: response.sessionId,
+      latencyMs: response.latencyMs,
+      contentLength: content.length,
+      contentPreview: content.substring(0, 200)
+    });
+
+    const wbs = this.parseAndValidateWBS(content);
+    const estimation = this.estimationEngine.estimateProject(wbs, messages[1].content as any);
+
+    const meta: LLMCallMeta = {
+      provider: 'ollama',
+      model: process.env.OLLAMA_MODEL || 'llama3.1:8b',
+      latencyMs: response.latencyMs,
+      usedFallback: true,
+      sessionId: response.sessionId,
+      retryCount,
+      inputTokens: response.response.prompt_eval_count || 0,
+      outputTokens: response.response.eval_count || 0,
+      totalTokens: (response.response.prompt_eval_count || 0) + (response.response.eval_count || 0),
+      timestamp: new Date().toISOString()
+    };
+
+    return { result: estimation, meta };
+  }
+
+  private createSampleFallback(input: EstimationInput, retryCount: number): { result: EstimationResult; meta: LLMCallMeta } {
     // Create a fallback WBS based on the input
     const fallbackWBS: WBSResponse = {
       epics: [
@@ -193,7 +331,7 @@ class LLMService {
     const estimation = this.estimationEngine.estimateProject(fallbackWBS, input);
     
     const meta: LLMCallMeta = {
-      provider: 'azure-fallback',
+      provider: 'sample-fallback',
       model: 'fallback-sample',
       latencyMs: 100,
       usedFallback: true,

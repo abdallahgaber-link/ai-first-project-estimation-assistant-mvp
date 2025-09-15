@@ -6,8 +6,10 @@ const envSchema = z.object({
   PORT: z.string().default('3000'),
   CORS_ORIGIN: z.string().default('*'),
   
-  // LLM Provider
-  PROVIDER: z.enum(['azure', 'openai', 'grok', 'ollama', 'gemini']).default('openai'),
+  // LLM Provider Configuration
+  PRIMARY_PROVIDER: z.enum(['azure', 'gemini', 'ollama']).default('azure'),
+  ENABLE_FALLBACK: z.string().transform(val => val === 'true').default('true'),
+  FALLBACK_PROVIDERS: z.string().default('gemini,ollama'),
   
   // OpenAI
   OPENAI_API_KEY: z.string().optional(),
@@ -48,33 +50,34 @@ export function loadConfig() {
   dotenv.config();
   
   console.log('🔧 Loading configuration...');
-  console.log('🔧 PROVIDER from env:', process.env.PROVIDER);
-  console.log('🔧 GROK_API_KEY from env:', process.env.GROK_API_KEY ? 'SET' : 'NOT SET');
-  console.log('🔧 GROK_API_KEY length:', process.env.GROK_API_KEY?.length);
-  console.log('🔧 GROK_API_KEY first 10 chars:', process.env.GROK_API_KEY?.substring(0, 10));
+  console.log('🔧 PRIMARY_PROVIDER from env:', process.env.PRIMARY_PROVIDER);
+  console.log('🔧 ENABLE_FALLBACK from env:', process.env.ENABLE_FALLBACK);
+  console.log('🔧 FALLBACK_PROVIDERS from env:', process.env.FALLBACK_PROVIDERS);
   
   try {
     const env = envSchema.parse(process.env);
     
     // Validate provider-specific environment variables
-    if (env.PROVIDER === 'azure') {
-      if (!env.AZURE_RESOURCE_NAME) {
-        throw new Error('AZURE_RESOURCE_NAME is required when PROVIDER=azure');
+    const allProviders = [env.PRIMARY_PROVIDER, ...(env.ENABLE_FALLBACK ? env.FALLBACK_PROVIDERS.split(',') : [])];
+    
+    for (const provider of allProviders) {
+      const trimmedProvider = provider.trim();
+      
+      if (trimmedProvider === 'azure') {
+        if (!env.AZURE_RESOURCE_NAME) {
+          throw new Error('AZURE_RESOURCE_NAME is required when using Azure provider');
+        }
+        if (!env.AZURE_DEPLOYMENT_NAME) {
+          throw new Error('AZURE_DEPLOYMENT_NAME is required when using Azure provider');
+        }
+        if (!env.AZURE_OPENAI_SHARED_TOKEN) {
+          throw new Error('AZURE_OPENAI_SHARED_TOKEN is required when using Azure provider');
+        }
+      } else if (trimmedProvider === 'gemini' && !env.GEMINI_API_KEY) {
+        console.warn('GEMINI_API_KEY not provided - Gemini fallback will be skipped');
+      } else if (trimmedProvider === 'ollama' && !env.OLLAMA_BASE_URL) {
+        console.warn('OLLAMA_BASE_URL not provided - Ollama fallback will be skipped');
       }
-      if (!env.AZURE_DEPLOYMENT_NAME) {
-        throw new Error('AZURE_DEPLOYMENT_NAME is required when PROVIDER=azure');
-      }
-      if (!env.AZURE_OPENAI_SHARED_TOKEN) {
-        throw new Error('AZURE_OPENAI_SHARED_TOKEN is required when PROVIDER=azure');
-      }
-    } else if (env.PROVIDER === 'openai' && !env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is required when PROVIDER=openai');
-    } else if (env.PROVIDER === 'grok' && !env.GROK_API_KEY) {
-      throw new Error('GROK_API_KEY is required when PROVIDER=grok');
-    } else if (env.PROVIDER === 'ollama' && !env.OLLAMA_BASE_URL) {
-      throw new Error('OLLAMA_BASE_URL is required when PROVIDER=ollama');
-    } else if (env.PROVIDER === 'gemini' && !env.GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is required when PROVIDER=gemini');
     }
     
     // Set process.env with validated values
@@ -101,7 +104,9 @@ export function getConfig() {
     
     // LLM Configuration
     llm: {
-      provider: process.env.PROVIDER as 'azure' | 'openai' | 'grok' | 'ollama' | 'gemini',
+      primaryProvider: process.env.PRIMARY_PROVIDER as 'azure' | 'gemini' | 'ollama',
+      enableFallback: Boolean(process.env.ENABLE_FALLBACK),
+      fallbackProviders: process.env.FALLBACK_PROVIDERS?.split(',').map(p => p.trim()) || [],
       openai: {
         apiKey: process.env.OPENAI_API_KEY,
         model: process.env.OPENAI_MODEL,
