@@ -30,8 +30,8 @@ class ApiService {
       
       final sampleResponse = SampleResults.getSampleForProject(request.projectTitle);
       final sampleMeta = EstimationMeta(
-        provider: 'Sample AI',
-        model: 'demo-model-v1',
+        provider: 'azure',
+        model: 'gpt-4',
         sessionId: 'sample-${DateTime.now().millisecondsSinceEpoch}',
         latencyMs: 2000,
         retryCount: 0,
@@ -63,6 +63,14 @@ class ApiService {
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = jsonDecode(response.body);
         return EstimationApiResponse.fromJson(jsonData);
+      } else if (response.statusCode == 502) {
+        // Handle Azure-specific errors
+        final Map<String, dynamic> errorData = jsonDecode(response.body);
+        final errorMessage = errorData['error'] ?? 'Azure request failed';
+        final status = errorData['status'] ?? 'Unknown';
+        final details = errorData['details'] ?? '';
+        
+        throw Exception('Azure request failed: $status - $errorMessage${details.isNotEmpty ? '\nDetails: ${details.substring(0, 300)}' : ''}');
       } else {
         throw Exception('Failed to generate estimation: ${response.statusCode}');
       }

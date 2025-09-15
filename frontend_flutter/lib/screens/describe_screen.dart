@@ -172,8 +172,9 @@ class DescribeScreen extends HookConsumerWidget {
       body: LoadingOverlay(
         isLoading: isLoading.value,
         message: 'Analyzing your project requirements...',
-        provider: 'AI Assistant',
-        model: 'Multi-Provider LLM',
+        provider: 'Azure',
+        model: 'GPT-4',
+        sessionId: 'abc12345',
         child: SingleChildScrollView(
           padding: ResponsiveUtils.getResponsivePadding(context),
           child: Center(

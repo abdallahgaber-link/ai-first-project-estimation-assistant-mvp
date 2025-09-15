@@ -26,9 +26,10 @@ const envSchema = z.object({
   OLLAMA_MODEL: z.string().default('llama3.1:8b'),
   
   // Azure OpenAI
-  AZURE_OPENAI_API_KEY: z.string().optional(),
-  AZURE_OPENAI_ENDPOINT: z.string().optional(),
-  AZURE_OPENAI_DEPLOYMENT: z.string().optional(),
+  AZURE_RESOURCE_NAME: z.string().optional(),
+  AZURE_DEPLOYMENT_NAME: z.string().optional(),
+  AZURE_OPENAI_API_VERSION: z.string().optional(),
+  AZURE_OPENAI_SHARED_TOKEN: z.string().optional(),
   
   // Estimation Constants
   DEFAULT_TEAM_VELOCITY: z.string().transform(Number).default('20'),
@@ -57,14 +58,14 @@ export function loadConfig() {
     
     // Validate provider-specific environment variables
     if (env.PROVIDER === 'azure') {
-      if (!env.AZURE_OPENAI_API_KEY) {
-        throw new Error('AZURE_OPENAI_API_KEY is required when PROVIDER=azure');
+      if (!env.AZURE_RESOURCE_NAME) {
+        throw new Error('AZURE_RESOURCE_NAME is required when PROVIDER=azure');
       }
-      if (!env.AZURE_OPENAI_ENDPOINT) {
-        throw new Error('AZURE_OPENAI_ENDPOINT is required when PROVIDER=azure');
+      if (!env.AZURE_DEPLOYMENT_NAME) {
+        throw new Error('AZURE_DEPLOYMENT_NAME is required when PROVIDER=azure');
       }
-      if (!env.AZURE_OPENAI_DEPLOYMENT) {
-        throw new Error('AZURE_OPENAI_DEPLOYMENT is required when PROVIDER=azure');
+      if (!env.AZURE_OPENAI_SHARED_TOKEN) {
+        throw new Error('AZURE_OPENAI_SHARED_TOKEN is required when PROVIDER=azure');
       }
     } else if (env.PROVIDER === 'openai' && !env.OPENAI_API_KEY) {
       throw new Error('OPENAI_API_KEY is required when PROVIDER=openai');
@@ -118,9 +119,10 @@ export function getConfig() {
         model: process.env.OLLAMA_MODEL,
       },
       azure: {
-        apiKey: process.env.AZURE_OPENAI_API_KEY,
-        endpoint: process.env.AZURE_OPENAI_ENDPOINT,
-        deployment: process.env.AZURE_OPENAI_DEPLOYMENT,
+        resourceName: process.env.AZURE_RESOURCE_NAME,
+        deploymentName: process.env.AZURE_DEPLOYMENT_NAME,
+        apiVersion: process.env.AZURE_OPENAI_API_VERSION,
+        sharedToken: process.env.AZURE_OPENAI_SHARED_TOKEN,
       },
     },
     

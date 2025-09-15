@@ -60,5 +60,9 @@ Generate a valid JSON object matching this schema:
 - "primary_role" should be one of: "Frontend/Flutter", "Backend", "QA", "DevOps", "UI/UX"
 - "assumptions" and "risks" must be arrays of strings
 - Return ONLY valid JSON, no markdown formatting or code blocks
-- Ensure all string values are properly quoted
+- Ensure all string values are properly quoted and escaped
 - Use double quotes for all JSON keys and string values
+- NO trailing commas in arrays or objects
+- Ensure all arrays and objects are properly closed
+- Do not include any text before or after the JSON object
+- Validate JSON syntax before responding

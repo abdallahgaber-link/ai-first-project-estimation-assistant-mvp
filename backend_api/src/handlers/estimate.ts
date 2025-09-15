@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { getLLMService } from '../lib/llm';
+import { type AzureError } from '../lib/azureClient';
 import logger from '../services/logger.service';
 
 // Input validation schema
@@ -105,6 +106,21 @@ estimateHandler.post('/', async (c) => {
           details: error.errors || error.message 
         },
         400
+      );
+    }
+    
+    // Handle Azure-specific errors
+    if (error instanceof Error && 'status' in error) {
+      const azureError = error as AzureError;
+      return c.json(
+        {
+          success: false,
+          error: 'Azure request failed',
+          provider: 'azure',
+          status: azureError.status,
+          details: azureError.details?.substring(0, 300) || azureError.message
+        },
+        502
       );
     }
     

@@ -8,6 +8,7 @@ import { logger as honoLogger } from 'hono/logger';
 import { serve } from '@hono/node-server';
 import { estimateHandler } from './handlers/estimate';
 import { exportHandler } from './handlers/export';
+import { healthHandler } from './handlers/health';
 import logger from './services/logger.service';
 
 const app = new Hono();
@@ -52,6 +53,7 @@ app.get('/health', (c) => {
 const api = new Hono();
 api.route('/estimate', estimateHandler);
 api.route('/export', exportHandler);
+api.route('/health', healthHandler);
 
 // Mount API routes
 app.route('/api', api);

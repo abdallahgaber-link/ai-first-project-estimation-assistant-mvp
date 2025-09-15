@@ -1,6 +1,6 @@
 # Project Estimation Assistant
 
-A comprehensive tool for generating project estimations using AI-powered Work Breakdown Structure (WBS) analysis with **multi-provider LLM support**.
+A comprehensive tool for generating project estimations using AI-powered Work Breakdown Structure (WBS) analysis with **Azure OpenAI integration**.
 
 ## 🚀 Quick Start
 
@@ -16,11 +16,11 @@ A comprehensive tool for generating project estimations using AI-powered Work Br
 
 ## ✨ Features
 
-### 🤖 **Multi-Provider LLM Support**
-- **Local AI**: Ollama (completely offline)
-- **Cloud AI**: OpenAI, Google Gemini, Azure OpenAI
-- **Automatic failover** and retry mechanisms
-- **Provider transparency** with usage metrics
+### 🤖 **Azure OpenAI Integration**
+- **Enterprise-grade AI**: Azure OpenAI with shared token authentication
+- **Query parameter authentication** for enhanced security compliance
+- **Fail-fast behavior** with comprehensive error handling
+- **Provider transparency** with usage metrics and session tracking
 
 ### 📊 **Advanced Estimation Engine**
 - **Work Breakdown Structure** - AI-generated detailed project breakdown
@@ -79,7 +79,7 @@ A comprehensive tool for generating project estimations using AI-powered Work Br
 
 ### Backend
 - **Framework**: TypeScript, Hono
-- **LLM Providers**: Ollama, OpenAI, Google Gemini, Azure OpenAI
+- **LLM Provider**: Azure OpenAI with query parameter authentication
 - **Validation**: Zod schemas
 - **Logging**: Winston with daily-rotate-file
 - **Export**: xlsx, pdf-lib for document generation
@@ -93,9 +93,9 @@ A comprehensive tool for generating project estimations using AI-powered Work Br
 - **Testing**: Flutter test framework
 
 ### AI & Models
-- **Local**: Ollama with Llama 3.1 8B model
-- **Cloud**: GPT-4, Gemini 1.5 Flash, Azure OpenAI
-- **Fallback**: Automatic provider switching on failure
+- **Azure OpenAI**: GPT-4 with enterprise-grade security
+- **Authentication**: Shared token via query parameters
+- **Error Handling**: Fail-fast behavior with detailed error reporting
 
 ## 📸 Screenshots
 
@@ -265,51 +265,20 @@ cp backend_api/.env.example backend_api/.env
 nano backend_api/.env
 ```
 
-#### 2. Choose Your AI Provider
+#### 2. Configure Azure OpenAI
 
-**Option A: Ollama (Local AI - Recommended)**
-```bash
-# Install Ollama
-brew install ollama
-
-# Start Ollama service
-ollama serve
-
-# Pull the model (in another terminal)
-ollama pull llama3.1:8b
-
-# Configure .env
-DEFAULT_LLM_PROVIDER=ollama
-OLLAMA_MODEL=llama3.1:8b
-```
-
-**Option B: OpenAI**
-```bash
-# Get API key from: https://platform.openai.com/api-keys
-# Configure .env
-DEFAULT_LLM_PROVIDER=openai
-OPENAI_API_KEY=your_actual_api_key_here
-OPENAI_MODEL=gpt-4
-```
-
-**Option C: Google Gemini**
-```bash
-# Get API key from: https://makersuite.google.com/app/apikey
-# Configure .env
-DEFAULT_LLM_PROVIDER=gemini
-GEMINI_API_KEY=your_actual_api_key_here
-GEMINI_MODEL=gemini-1.5-flash
-```
-
-**Option D: Azure OpenAI**
+**Azure OpenAI Setup (Required)**
 ```bash
 # Get credentials from Azure OpenAI Studio
 # Configure .env
-DEFAULT_LLM_PROVIDER=azure
-AZURE_OPENAI_API_KEY=your_actual_api_key_here
-AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
-AZURE_OPENAI_DEPLOYMENT_NAME=gpt-4
+PROVIDER=azure
+AZURE_RESOURCE_NAME=your_azure_resource_name
+AZURE_DEPLOYMENT_NAME=your_azure_deployment_name
+AZURE_OPENAI_API_VERSION=2025-01-01-preview
+AZURE_OPENAI_SHARED_TOKEN=your_azure_shared_token_here
 ```
+
+**Note**: This application uses Azure OpenAI exclusively with shared token authentication passed as query parameters for enhanced security compliance.
 
 #### 3. Install Dependencies
 ```bash
@@ -336,45 +305,49 @@ flutter run -d chrome --web-port=8080
 The `.env` file in `backend_api/` should contain:
 
 ```env
-# Required: Choose your AI provider
-DEFAULT_LLM_PROVIDER=ollama  # ollama, openai, gemini, azure
-
-# For Ollama (Local AI)
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=llama3.1:8b
-
-# For OpenAI
-OPENAI_API_KEY=your_openai_api_key_here
-OPENAI_MODEL=gpt-4
-
-# For Google Gemini
-GEMINI_API_KEY=your_gemini_api_key_here
-GEMINI_MODEL=gemini-1.5-flash
-
-# For Azure OpenAI
-AZURE_OPENAI_API_KEY=your_azure_api_key_here
-AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
-AZURE_OPENAI_DEPLOYMENT_NAME=gpt-4
+# Azure OpenAI Configuration (Required)
+PROVIDER=azure
+AZURE_RESOURCE_NAME=your_azure_resource_name
+AZURE_DEPLOYMENT_NAME=your_azure_deployment_name
+AZURE_OPENAI_API_VERSION=2025-01-01-preview
+AZURE_OPENAI_SHARED_TOKEN=your_azure_shared_token_here
 
 # Server Configuration (optional)
 PORT=3000
 CORS_ORIGIN=http://localhost:8080
+
+# Logging Configuration
+LOG_LEVEL=info
+LOG_TO_FILE=true
+LOG_DIR=./logs
 ```
 
-### API Key Setup Instructions
+### Azure OpenAI Setup Instructions
 
-1. **OpenAI**: Visit [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
-2. **Google Gemini**: Visit [makersuite.google.com/app/apikey](https://makersuite.google.com/app/apikey)
-3. **Azure OpenAI**: Access through Azure Portal → OpenAI Studio
-4. **Ollama**: No API key needed - runs locally
+**Azure OpenAI Configuration:**
+1. Access Azure Portal → OpenAI Studio
+2. Get your resource name (e.g., `myresource`)
+3. Get your deployment name (e.g., `mydeployment`) 
+4. Obtain the shared Bearer token from your company
+5. Configure the `.env` file with these values
+
+**Example curl test:**
+```bash
+curl -X POST "https://<resource>.openai.azure.com/openai/deployments/<deployment>/chat/completions?api-version=2025-01-01-preview&Authorization=Bearer%20<TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"messages":[{"role":"user","content":"Hello"}]}'
+```
+
+**Note**: The Azure token is passed as a query parameter (not header) due to company configuration requirements.
 
 ### Troubleshooting
 
 **Common Issues:**
 - **Port 3000 already in use**: Change `PORT` in `.env` file
-- **Ollama model not found**: Run `ollama pull llama3.1:8b`
-- **API key invalid**: Verify your API key is correct and has sufficient credits
+- **Azure token invalid**: Verify your shared token is correct and active
+- **Azure resource not found**: Check `AZURE_RESOURCE_NAME` and `AZURE_DEPLOYMENT_NAME`
 - **CORS errors**: Ensure `CORS_ORIGIN` matches your frontend URL
+- **502 errors**: Check Azure OpenAI service status and token permissions
 
 ## 🎮 Usage
 
@@ -452,12 +425,14 @@ CORS_ORIGIN=http://localhost:8080
 ### Health
 - `GET /health` - Service health check
   - **Output**: Service status and configuration
+- `GET /api/health/azure` - Azure OpenAI health check
+  - **Output**: Azure provider status, model info, and latency
 
 ## 📊 Service URLs
 
 - **Frontend**: http://localhost:8080
 - **Backend API**: http://localhost:3000
-- **Ollama Service**: http://localhost:11434
+- **Azure Health Check**: http://localhost:3000/api/health/azure
 
 ## ⚙️ Configuration
 
@@ -466,30 +441,21 @@ CORS_ORIGIN=http://localhost:8080
 Create `.env` file in `backend_api/`:
 
 ```env
-# LLM Provider Configuration
-DEFAULT_LLM_PROVIDER=ollama  # ollama, openai, gemini, azure
-DEFAULT_MODEL=llama3.1:8b
-
-# OpenAI Configuration
-OPENAI_API_KEY=your_openai_key
-OPENAI_MODEL=gpt-4
-
-# Google Gemini Configuration  
-GEMINI_API_KEY=your_gemini_key
-GEMINI_MODEL=gemini-1.5-flash
-
-# Azure OpenAI Configuration
-AZURE_OPENAI_API_KEY=your_azure_key
-AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
-AZURE_OPENAI_DEPLOYMENT_NAME=gpt-4
+# Azure OpenAI Configuration (Required)
+PROVIDER=azure
+AZURE_RESOURCE_NAME=your_azure_resource_name
+AZURE_DEPLOYMENT_NAME=your_azure_deployment_name
+AZURE_OPENAI_API_VERSION=2025-01-01-preview
+AZURE_OPENAI_SHARED_TOKEN=your_azure_shared_token_here
 
 # Server Configuration
 PORT=3000
-CORS_ORIGIN=*
+CORS_ORIGIN=http://localhost:8080
 
-# Logging
+# Logging Configuration
 LOG_LEVEL=info
 LOG_TO_FILE=true
+LOG_DIR=./logs
 ```
 
 ### Estimation Parameters

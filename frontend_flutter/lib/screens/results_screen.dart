@@ -199,11 +199,11 @@ class ResultsScreen extends HookConsumerWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.memory,
+                            Icon(Icons.cloud,
                                 size: 12, color: Colors.blue[700]),
                             const SizedBox(width: 4),
                             Text(
-                              'Model: ${meta.model}',
+                              'Provider: ${meta.provider} • Model: ${meta.model} • ${meta.latencyMs}ms',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey[600],

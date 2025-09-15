@@ -6,6 +6,7 @@ class LoadingOverlay extends StatelessWidget {
   final String? message;
   final String? provider;
   final String? model;
+  final String? sessionId;
 
   const LoadingOverlay({
     super.key,
@@ -14,6 +15,7 @@ class LoadingOverlay extends StatelessWidget {
     this.message,
     this.provider,
     this.model,
+    this.sessionId,
   });
 
   @override
@@ -40,7 +42,7 @@ class LoadingOverlay extends StatelessWidget {
                       if (provider != null) ...[
                         const SizedBox(height: 8),
                         Text(
-                          'Using ${provider} ${model != null ? '($model)' : ''}',
+                          'Provider: Azure • Model: ${model ?? 'Unknown'} • Session ${sessionId ?? 'N/A'}',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
